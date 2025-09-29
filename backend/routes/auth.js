@@ -1,4 +1,4 @@
-// routes/auth.js
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -7,7 +7,7 @@ const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../ut
 
 const router = express.Router();
 
-// cookie options
+
 const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: 'lax',
@@ -16,7 +16,7 @@ const COOKIE_OPTS = {
   path: '/'
 };
 
-// REGISTER
+
 router.post('/register', async (req, res) => {
   try {
     const { name = '', email, password, role = 'user' } = req.body;
@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// LOGIN
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -48,11 +48,11 @@ router.post('/login', async (req, res) => {
 
     const accessToken = signAccessToken(user);
 
-    // generate refresh token payload with jti (use random id)
+   
     const jti = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
     const refreshToken = signRefreshToken({ sub: user._id.toString(), jti });
 
-    // store refresh token on user (simple rotation: replace old)
+   
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -64,7 +64,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// REFRESH
+
 router.post('/refresh', async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.status(401).json({ message: 'No refresh token' });
@@ -76,15 +76,15 @@ router.post('/refresh', async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    // check token matches stored one (simple revocation)
+    
     if (user.refreshToken !== token) {
-      // possible reuse - clear stored token
+      
       user.refreshToken = null;
       await user.save();
       return res.status(401).json({ message: 'Refresh token mismatch' });
     }
 
-    // rotate: create new refresh token, replace stored one
+    
     const jti = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
     const newRefreshToken = signRefreshToken({ sub: user._id.toString(), jti });
 
@@ -101,7 +101,7 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// LOGOUT
+
 router.post('/logout', async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
